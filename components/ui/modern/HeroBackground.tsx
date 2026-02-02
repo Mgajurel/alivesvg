@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+
 
 export function HeroBackground({ children }: { children: React.ReactNode }) {
     return (

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ArrowRight, Wand2, Grid, Sparkles, Code, Upload } from "lucide-react";
@@ -10,10 +9,6 @@ import { motion } from "framer-motion";
 
 export default function Home() {
   const router = useRouter();
-
-  const Skeleton = () => (
-    <div className="flex flex-1 w-full h-full min-h-[6rem] rounded-xl bg-gradient-to-br from-neutral-200 dark:from-neutral-900 dark:to-neutral-800 to-neutral-100 animate-pulse"></div>
-  );
 
   const items = [
     {
