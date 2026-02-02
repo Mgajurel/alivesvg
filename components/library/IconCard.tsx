@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { IconItem } from "@/constants/library";
-import { ANIMATION_VARIANTS, SPRING_TRANSITION } from "@/constants/animations";
+import { ANIMATION_VARIANTS } from "@/constants/animations";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Copy, Check } from "lucide-react";
