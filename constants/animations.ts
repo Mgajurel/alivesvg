@@ -1,39 +1,126 @@
-import { Variants } from "framer-motion";
+import { Transition, Variants } from "framer-motion";
 
 export type AnimationPreset = "fade" | "scale" | "slide" | "spin" | "bounce" | "pulse";
+export type AnimationTriggerMode = "always" | "hover";
+export type AnimationLoopMode = "once" | "twice" | "continuous";
 
-export const ANIMATION_VARIANTS: Record<AnimationPreset, Variants> = {
+export type AnimationPlaybackSettings = {
+    triggerMode: AnimationTriggerMode;
+    loopMode: AnimationLoopMode;
+};
+
+type PresetConfig = {
+    hidden: Record<string, number | string>;
+    rest: Record<string, number | string>;
+    play: Record<string, number | string | number[]>;
+    transition: Transition;
+};
+
+export const TRIGGER_MODE_LABELS: Record<AnimationTriggerMode, string> = {
+    always: "Always",
+    hover: "On Hover",
+};
+
+export const LOOP_MODE_LABELS: Record<AnimationLoopMode, string> = {
+    once: "Once",
+    twice: "Twice",
+    continuous: "Continuous",
+};
+
+const DEFAULT_PLAYBACK: AnimationPlaybackSettings = {
+    triggerMode: "always",
+    loopMode: "continuous",
+};
+
+const LOOP_REPEAT: Record<AnimationLoopMode, number> = {
+    once: 0,
+    twice: 1,
+    continuous: Infinity,
+};
+
+const PRESET_CONFIGS: Record<AnimationPreset, PresetConfig> = {
     fade: {
         hidden: { opacity: 0 },
-        visible: { opacity: 1 },
-        hover: { opacity: 0.7 },
+        rest: { opacity: 1 },
+        play: { opacity: [0.35, 1, 0.35] },
+        transition: { duration: 1.25, ease: "easeInOut" },
     },
     scale: {
-        hidden: { scale: 0 },
-        visible: { scale: 1 },
-        hover: { scale: 1.1 },
+        hidden: { scale: 0.85, opacity: 0 },
+        rest: { scale: 1, opacity: 1 },
+        play: { scale: [1, 1.12, 1] },
+        transition: { duration: 1.2, ease: "easeInOut" },
     },
     slide: {
         hidden: { x: -20, opacity: 0 },
-        visible: { x: 0, opacity: 1 },
-        hover: { x: 5 },
+        rest: { x: 0, opacity: 1 },
+        play: { x: [0, 8, 0], opacity: [1, 0.9, 1] },
+        transition: { duration: 1.15, ease: "easeInOut" },
     },
     spin: {
-        hidden: { rotate: 0 },
-        visible: { rotate: 360, transition: { repeat: Infinity, ease: "linear", duration: 2 } },
-        hover: { rotate: 90 },
+        hidden: { rotate: 0, opacity: 0 },
+        rest: { rotate: 0, opacity: 1 },
+        play: { rotate: [0, 360], opacity: 1 },
+        transition: { duration: 1.8, ease: "linear" },
     },
     bounce: {
-        hidden: { y: 0 },
-        visible: { y: [0, -10, 0], transition: { repeat: Infinity, duration: 1 } },
-        hover: { y: -5 },
+        hidden: { y: 0, opacity: 0 },
+        rest: { y: 0, opacity: 1 },
+        play: { y: [0, -10, 0], opacity: 1 },
+        transition: { duration: 0.95, ease: "easeInOut" },
     },
     pulse: {
-        hidden: { scale: 1 },
-        visible: { scale: [1, 1.05, 1], transition: { repeat: Infinity, duration: 1.5 } },
-        hover: { scale: 1.1 },
+        hidden: { scale: 0.92, opacity: 0 },
+        rest: { scale: 1, opacity: 1 },
+        play: { scale: [1, 1.08, 1], opacity: [1, 0.86, 1] },
+        transition: { duration: 1.4, ease: "easeInOut" },
     },
 };
+
+function getRepeatedTransition(base: Transition, loopMode: AnimationLoopMode): Transition {
+    return {
+        ...base,
+        repeat: LOOP_REPEAT[loopMode],
+    };
+}
+
+export function getAnimationVariants(
+    preset: AnimationPreset,
+    playback: AnimationPlaybackSettings = DEFAULT_PLAYBACK,
+): Variants {
+    const config = PRESET_CONFIGS[preset];
+
+    return {
+        hidden: config.hidden,
+        rest: config.rest,
+        play: {
+            ...config.play,
+            transition: getRepeatedTransition(config.transition, playback.loopMode),
+        },
+    };
+}
+
+export function getMotionStateTargets(triggerMode: AnimationTriggerMode) {
+    return {
+        animate: triggerMode === "always" ? "play" : "rest",
+        whileHover: triggerMode === "hover" ? "play" : undefined,
+    };
+}
+
+export function serializeVariantsForCode(variants: Variants): string {
+    return JSON.stringify(
+        variants,
+        (_key, value) => (value === Infinity ? "__INFINITY__" : value),
+        2,
+    ).replace(/"__INFINITY__"/g, "Infinity");
+}
+
+export const ANIMATION_VARIANTS: Record<AnimationPreset, Variants> = (
+    Object.keys(PRESET_CONFIGS) as AnimationPreset[]
+).reduce((accumulator, preset) => {
+    accumulator[preset] = getAnimationVariants(preset, DEFAULT_PLAYBACK);
+    return accumulator;
+}, {} as Record<AnimationPreset, Variants>);
 
 export const SPRING_TRANSITION = {
     type: "spring",
