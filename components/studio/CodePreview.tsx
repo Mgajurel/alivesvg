@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AnimationPreset } from "@/constants/animations";
+import {
+    AnimationLoopMode,
+    AnimationPreset,
+    AnimationTriggerMode,
+    getAnimationVariants,
+    serializeVariantsForCode,
+} from "@/constants/animations";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Check, Copy } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
@@ -15,24 +20,36 @@ import "prismjs/components/prism-tsx";
 interface CodePreviewProps {
     animation: AnimationPreset;
     svgName?: string;
+    triggerMode: AnimationTriggerMode;
+    loopMode: AnimationLoopMode;
 }
 
-export function CodePreview({ animation, svgName = "MyIcon" }: CodePreviewProps) {
+export function CodePreview({
+    animation,
+    svgName = "MyIcon",
+    triggerMode,
+    loopMode,
+}: CodePreviewProps) {
     const [copied, setCopied] = useState(false);
 
-    const codeString = `import { motion } from "framer-motion";
+    const variants = getAnimationVariants(animation, { triggerMode, loopMode });
+    const variantString = serializeVariantsForCode(variants);
+    const animateLines = triggerMode === "hover"
+        ? `      animate="rest"\n      whileHover="play"`
+        : `      animate="play"`;
 
-const ${animation}Variant = {
-  hidden: { ... }, // Define your states here based on the preset
-  visible: { ... },
-};
+    const codeString = `import { motion } from "framer-motion";
+import ${svgName} from "./${svgName}";
+
+const variants = ${variantString};
 
 export function Animated${svgName}() {
   return (
     <motion.div
       initial="hidden"
-      animate="visible"
-      variants={${animation}Variant}
+${animateLines}
+      variants={variants}
+      className="inline-flex"
     >
       <${svgName} />
     </motion.div>
@@ -43,26 +60,41 @@ export function Animated${svgName}() {
         Prism.highlightAll();
     }, [codeString]);
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(codeString);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(codeString);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch {
+            setCopied(false);
+        }
     };
 
     return (
-        <Card className="mt-6 border-slate-800 bg-slate-950 text-slate-50">
-            <CardHeader className="flex flex-row items-center justify-between py-3">
-                <CardTitle className="text-sm font-medium text-slate-400">React Code</CardTitle>
-                <Button variant="ghost" size="sm" onClick={handleCopy} className="text-slate-400 hover:text-white hover:bg-slate-800">
-                    {copied ? <Check size={14} className="mr-2 text-green-500" /> : <Copy size={14} className="mr-2" />}
-                    {copied ? "Copied" : "Copy"}
+        <div className="overflow-hidden rounded-[24px] border border-[#0f2238] bg-[#0f2238] text-[#d7ebff] shadow-[0_20px_52px_rgba(10,18,32,0.34)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8fb6d8]">
+                        React export
+                    </p>
+                    <p className="text-sm font-medium text-white">Animated{svgName}.tsx</p>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="rounded-full border border-white/10 bg-white/5 text-[#c4dbf3] hover:bg-white/10 hover:text-white"
+                >
+                    {copied ? <Check size={14} className="mr-2 text-emerald-400" /> : <Copy size={14} className="mr-2" />}
+                    {copied ? "Copied" : "Copy Code"}
                 </Button>
-            </CardHeader>
-            <CardContent className="p-0 overflow-hidden rounded-b-xl">
-                <pre className="!bg-slate-950 !m-0 !p-4 overflow-x-auto text-xs sm:text-sm">
+            </div>
+
+            <div className="max-h-[410px] overflow-auto">
+                <pre className="!m-0 !bg-[#0f2238] !p-4 text-xs sm:text-sm">
                     <code className="language-tsx">{codeString}</code>
                 </pre>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

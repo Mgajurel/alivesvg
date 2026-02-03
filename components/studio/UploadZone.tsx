@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/lib/utils";
-import { UploadCloud, Code } from "lucide-react";
+import { Code2, Sparkles, UploadCloud } from "lucide-react";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 
@@ -25,9 +25,9 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'image/svg+xml': ['.svg']
+            "image/svg+xml": [".svg"],
         },
-        maxFiles: 1
+        maxFiles: 1,
     });
 
     const handlePasteSubmit = () => {
@@ -38,24 +38,30 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
 
     return (
         <div className="w-full">
-            <div className="flex items-center gap-2 mb-4 bg-slate-100 p-1 rounded-lg w-fit dark:bg-slate-800">
+            <div className="mb-5 inline-flex items-center gap-1 rounded-2xl border border-slate-900/10 bg-white/80 p-1.5 shadow-sm backdrop-blur-sm">
                 <button
+                    type="button"
                     onClick={() => setMode("upload")}
                     className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                        mode === "upload" ? "bg-white shadow-sm text-slate-900 dark:bg-slate-950 dark:text-slate-50" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                        "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all",
+                        mode === "upload"
+                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)]"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
                     )}
                 >
                     <UploadCloud size={16} /> Upload File
                 </button>
                 <button
+                    type="button"
                     onClick={() => setMode("paste")}
                     className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2",
-                        mode === "paste" ? "bg-white shadow-sm text-slate-900 dark:bg-slate-950 dark:text-slate-50" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                        "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all",
+                        mode === "paste"
+                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)]"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
                     )}
                 >
-                    <Code size={16} /> Paste SVG
+                    <Code2 size={16} /> Paste SVG
                 </button>
             </div>
 
@@ -63,30 +69,56 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                 <div
                     {...getRootProps()}
                     className={cn(
-                        "border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-colors h-64 bg-card",
-                        isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"
+                        "group relative flex h-[22rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed px-6 text-center transition-all sm:px-8",
+                        isDragActive
+                            ? "border-[#ff6d3a] bg-[#fff3ec] shadow-[0_14px_42px_rgba(255,109,58,0.2)]"
+                            : "border-slate-300/90 bg-white/90 hover:border-[#ff6d3a]/60 hover:bg-[#fffaf6] hover:shadow-[0_14px_36px_rgba(17,32,58,0.12)]",
                     )}
                 >
                     <input {...getInputProps()} />
-                    <div className="bg-muted p-4 rounded-full mb-4">
-                        <UploadCloud className="text-muted-foreground" size={32} />
+
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,109,58,0.18),transparent_36%),radial-gradient(circle_at_78%_80%,rgba(15,125,138,0.18),transparent_32%)] opacity-70" />
+
+                    <div className="relative z-10">
+                        <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-900/10 bg-white text-[#ff6d3a] shadow-sm">
+                            <UploadCloud size={28} />
+                        </div>
+                        <h3 className="text-xl font-semibold text-slate-900">Drop your SVG into the stage</h3>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
+                            Drag &amp; drop or click anywhere in this area to pick a file.
+                        </p>
+
+                        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs">
+                            <span className="rounded-full border border-slate-900/10 bg-white px-3 py-1 font-medium text-slate-600">
+                                .svg only
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#ff6d3a]/30 bg-[#fff0e8] px-3 py-1 font-medium text-[#a94824]">
+                                <Sparkles className="h-3.5 w-3.5" />
+                                Live preview ready
+                            </span>
+                        </div>
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground">Upload your SVG</h3>
-                    <p className="text-sm text-muted-foreground mt-2">
-                        Drag & drop or click to browse.
-                    </p>
                 </div>
             ) : (
-                <div className="bg-card border border-border rounded-xl p-6 h-64 flex flex-col gap-4">
+                <div className="flex h-[22rem] flex-col gap-4 rounded-[28px] border border-slate-900/10 bg-white/90 p-4 shadow-[0_12px_34px_rgba(17,32,58,0.08)] sm:p-5">
                     <Textarea
                         placeholder="<svg>...</svg>"
-                        className="flex-1 font-mono text-xs resize-none"
+                        className="h-full flex-1 resize-none rounded-2xl border-slate-200 bg-slate-50/70 font-mono text-xs leading-relaxed text-slate-800 focus-visible:ring-[#ff6d3a]"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                     />
-                    <Button onClick={handlePasteSubmit} disabled={!text.trim()}>
-                        Load SVG
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500">
+                            Paste full SVG markup. {text.length > 0 ? `${text.length} characters` : "No content yet."}
+                        </p>
+                        <Button
+                            onClick={handlePasteSubmit}
+                            disabled={!text.trim()}
+                            className="rounded-full !bg-[#ff6d3a] !text-white !border-[#ff6d3a] px-5 hover:!bg-[#ea5f2f]"
+                        >
+                            Load into canvas
+                        </Button>
+                    </div>
                 </div>
             )}
         </div>
