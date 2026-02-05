@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 import {
   ArrowRight,
@@ -13,8 +14,10 @@ import {
   Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
+import PricingSection from "@/components/ui/pricing-section";
 import { LIBRARY_ICONS } from "@/constants/library";
-import { type AnimationPreset } from "@/constants/animations";
+import { type StandardAnimationPreset } from "@/constants/animations";
 
 const heroStagger: Variants = {
   hidden: { opacity: 0 },
@@ -46,7 +49,7 @@ const studioSteps = [
   },
   {
     title: "Choose animation",
-    description: "Apply Spin, Bounce, Fade, Slide, Pulse, or Scale presets in one click.",
+    description: "Pick a preset or craft a custom motion style.",
     icon: WandSparkles,
   },
   {
@@ -56,7 +59,7 @@ const studioSteps = [
   },
 ];
 
-function getLoopAnimation(preset: AnimationPreset) {
+function getLoopAnimation(preset: StandardAnimationPreset) {
   switch (preset) {
     case "spin":
       return {
@@ -93,15 +96,14 @@ function getLoopAnimation(preset: AnimationPreset) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const showcaseIcons = LIBRARY_ICONS.slice(0, 9);
-  const primaryCtaClass =
-    "rounded-full !bg-[#ff6d3a] !text-white !border-[#ff6d3a] px-7 font-semibold shadow-[0_12px_30px_rgba(255,109,58,0.34)] hover:!bg-[#ea5f2f] hover:!border-[#ea5f2f]";
   const secondaryCtaClass =
-    "rounded-full border-slate-900/20 bg-white/85 px-7 font-semibold text-slate-800 backdrop-blur-sm hover:bg-white";
+    "rounded-full px-7 font-semibold";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,var(--alivesvg-bg)_0%,#fff_55%,var(--alivesvg-bg-alt)_100%)] text-[var(--alivesvg-ink)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(255,109,58,0.24),transparent_33%),radial-gradient(circle_at_82%_8%,rgba(20,184,166,0.22),transparent_30%),linear-gradient(rgba(19,35,58,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(19,35,58,0.05)_1px,transparent_1px)] bg-[size:100%_100%,100%_100%,32px_32px,32px_32px] [mask-image:linear-gradient(to_bottom,black,black,transparent_90%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,var(--alivesvg-bg)_0%,var(--alivesvg-bg-alt)_55%,var(--alivesvg-bg)_100%)] text-[var(--alivesvg-ink)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(0,0,0,0.06),transparent_33%),radial-gradient(circle_at_82%_8%,rgba(0,0,0,0.04),transparent_30%),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:100%_100%,100%_100%,32px_32px,32px_32px] [mask-image:linear-gradient(to_bottom,black,black,transparent_90%)]" />
 
       <main className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-16 pt-8 md:px-8 lg:pb-24 lg:pt-10">
         <header className="mb-10 flex items-center justify-between">
@@ -115,12 +117,14 @@ export default function Home() {
           </Link>
 
           <div className="hidden items-center gap-3 sm:flex">
-            <Button asChild variant="ghost" className="rounded-full text-slate-700 hover:bg-white/70">
+            <Button asChild variant="outline" className="rounded-full">
               <Link href="/library">Library</Link>
             </Button>
-            <Button asChild className="rounded-full !bg-[#ff6d3a] !text-white px-5 font-semibold shadow-[0_8px_20px_rgba(255,109,58,0.3)] hover:!bg-[#ea5f2f]">
-              <Link href="/studio">Open Studio</Link>
-            </Button>
+            <InteractiveHoverButton
+              text="Open Studio"
+              onClick={() => router.push("/studio")}
+              className="w-auto min-w-[140px] px-4 text-sm"
+            />
           </div>
         </header>
 
@@ -156,15 +160,11 @@ export default function Home() {
             </motion.p>
 
             <motion.div variants={riseIn} className="mt-8 flex flex-wrap items-center gap-3">
-              <Button
-                asChild
-                size="lg"
-                className={primaryCtaClass}
-              >
-                <Link href="/studio">
-                  Start in Studio <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
+              <InteractiveHoverButton
+                text="Start in Studio"
+                onClick={() => router.push("/studio")}
+                className="w-auto min-w-[180px] px-4 text-sm"
+              />
               <Button
                 asChild
                 size="lg"
@@ -209,12 +209,12 @@ export default function Home() {
                     initial={{ opacity: 0, scale: 0.92, y: 8 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ duration: 0.45, delay: 0.08 * index }}
-                    className="group rounded-2xl border border-slate-900/10 bg-white p-4 shadow-sm transition-colors hover:border-[var(--alivesvg-accent)]/50 hover:bg-[#fff6f2]"
+                    className="group rounded-2xl border border-slate-900/10 bg-white p-4 shadow-sm transition-colors hover:border-[var(--alivesvg-accent)]/40 hover:bg-[#f0f0f0]"
                   >
                     <motion.div
                       animate={loop.animate}
                       transition={{ ...loop.transition, delay: index * 0.09 }}
-                      className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--alivesvg-accent-soft)] text-[var(--alivesvg-accent)] group-hover:bg-[#ffd1bd]"
+                      className="mx-auto mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--alivesvg-accent-soft)] text-[var(--alivesvg-accent)] group-hover:bg-[#dcdcdc]"
                     >
                       <Icon className="h-5 w-5" />
                     </motion.div>
@@ -228,10 +228,10 @@ export default function Home() {
           </motion.div>
         </section>
 
-        <section className="rounded-[30px] border border-slate-900/10 bg-white/80 p-6 shadow-[0_18px_52px_rgba(14,21,36,0.1)] backdrop-blur md:p-8">
+        <section className="rounded-[30px] border border-slate-900/10 bg-white/80 p-6 shadow-[0_18px_52px_rgba(14,21,36,0.1)] backdrop-blur dark:border-white/10 dark:bg-[#111111] dark:shadow-[0_18px_52px_rgba(0,0,0,0.32)] md:p-8">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div>
-              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#edf8ff] px-3 py-1 text-xs font-semibold text-[#0f4d7a] uppercase tracking-[0.08em]">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-semibold text-[#2b2b2b] uppercase tracking-[0.08em] dark:bg-[#1c1c1c] dark:text-[#e6e6e6]">
                 <Box className="h-3.5 w-3.5" />
                 Studio-First Flow
               </p>
@@ -248,9 +248,9 @@ export default function Home() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, amount: 0.4 }}
                       transition={{ duration: 0.35, delay: index * 0.08 }}
-                      className="flex gap-3 rounded-2xl border border-slate-900/10 bg-white p-4"
+                      className="flex gap-3 rounded-2xl border border-slate-900/10 bg-white p-4 dark:border-white/10 dark:bg-[#141414]"
                     >
-                      <div className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#ecfbff] text-[#0f7d8a]">
+                      <div className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#f1f1f1] text-[#333333] dark:bg-[#1f1f1f] dark:text-[#e0e0e0]">
                         <Icon className="h-4 w-4" />
                       </div>
                       <div>
@@ -268,11 +268,11 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.35 }}
               transition={{ duration: 0.5 }}
-              className="rounded-[24px] border border-slate-900/10 bg-gradient-to-br from-[#f7fcff] via-white to-[#fff7f3] p-5 md:p-6"
+              className="rounded-[24px] border border-slate-900/10 bg-gradient-to-br from-[#f2f2f2] via-white to-[#ededed] p-5 dark:border-white/10 dark:bg-gradient-to-br dark:from-[#121212] dark:via-[#151515] dark:to-[#0f0f0f] md:p-6"
             >
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-800">Quick Studio Demo</p>
-                <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs text-slate-600 shadow-sm">
+                <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs text-slate-600 shadow-sm dark:bg-[#1c1c1c] dark:text-slate-300">
                   no setup required
                 </span>
               </div>
@@ -281,12 +281,12 @@ export default function Home() {
                 <motion.div
                   whileHover={{ y: -3 }}
                   transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                  className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4"
+                  className="rounded-2xl border border-dashed border-slate-300 bg-white/80 p-4 dark:border-white/15 dark:bg-[#151515]"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                     Upload Zone
                   </p>
-                  <div className="mt-3 flex h-32 flex-col items-center justify-center rounded-xl bg-slate-50 px-3 text-center">
+                  <div className="mt-3 flex h-32 flex-col items-center justify-center rounded-xl bg-slate-50 px-3 text-center dark:bg-[#1b1b1b]">
                     <Upload className="mb-2 h-5 w-5 text-[var(--alivesvg-accent)]" />
                     <p className="text-sm font-medium text-slate-700">Drop your SVG here</p>
                     <p className="mt-1 text-xs text-slate-500">or paste raw SVG in one click</p>
@@ -296,9 +296,9 @@ export default function Home() {
                 <motion.div
                   whileHover={{ y: -3 }}
                   transition={{ type: "spring", stiffness: 220, damping: 20 }}
-                  className="rounded-2xl border border-slate-900/10 bg-[#0f2238] p-4 text-[#d7ebff]"
+                  className="rounded-2xl border border-slate-900/10 bg-[#111111] p-4 text-[#e6e6e6]"
                 >
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#8fb6d8]">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#bdbdbd]">
                     Export Output
                   </p>
                   <code className="block font-mono text-[11px] leading-relaxed">
@@ -308,17 +308,17 @@ export default function Home() {
                     <br />
                     {"</motion.svg>"}
                   </code>
-                  <p className="mt-3 text-[11px] text-[#89abc9]">React + Framer Motion component</p>
+                  <p className="mt-3 text-[11px] text-[#b0b0b0]">React + Framer Motion component</p>
                 </motion.div>
               </div>
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <div className="flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-[#0f7d8a]" />
+                <div className="flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm text-slate-700 dark:bg-[#1b1b1b] dark:text-slate-300">
+                  <CheckCircle2 className="h-4 w-4 text-[#333333] dark:text-[#e6e6e6]" />
                   Works with Lucide-style SVGs
                 </div>
-                <div className="flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm text-slate-700">
-                  <CheckCircle2 className="h-4 w-4 text-[#0f7d8a]" />
+                <div className="flex items-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-sm text-slate-700 dark:bg-[#1b1b1b] dark:text-slate-300">
+                  <CheckCircle2 className="h-4 w-4 text-[#333333] dark:text-[#e6e6e6]" />
                   Copy-paste ready for apps
                 </div>
               </div>
@@ -326,14 +326,18 @@ export default function Home() {
           </div>
         </section>
 
+        <PricingSection />
+
         <section className="pt-12 text-center">
           <p className="mx-auto max-w-xl text-sm text-slate-600 md:text-base">
             Built for fast integration: pick an icon, preview motion, tweak style, and ship.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            <Button asChild className={primaryCtaClass}>
-              <Link href="/library">Explore Library</Link>
-            </Button>
+            <InteractiveHoverButton
+              text="Explore Library"
+              onClick={() => router.push("/library")}
+              className="w-auto min-w-[180px] px-4 text-sm"
+            />
             <Button
               asChild
               variant="outline"

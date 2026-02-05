@@ -1,12 +1,34 @@
 import { Transition, Variants } from "framer-motion";
 
-export type AnimationPreset = "fade" | "scale" | "slide" | "spin" | "bounce" | "pulse";
+export const STANDARD_PRESETS = ["fade", "scale", "slide", "spin", "bounce", "pulse"] as const;
+export type StandardAnimationPreset = typeof STANDARD_PRESETS[number];
+export type AnimationPreset = StandardAnimationPreset | "custom";
 export type AnimationTriggerMode = "always" | "hover";
 export type AnimationLoopMode = "once" | "twice" | "continuous";
 
 export type AnimationPlaybackSettings = {
     triggerMode: AnimationTriggerMode;
     loopMode: AnimationLoopMode;
+};
+
+export type CustomAnimationSettings = {
+    duration: number;
+    easing: string;
+    scale: number;
+    rotate: number;
+    translateX: number;
+    translateY: number;
+    opacity: number;
+};
+
+export const DEFAULT_CUSTOM_SETTINGS: CustomAnimationSettings = {
+    duration: 1.2,
+    easing: "ease-in-out",
+    scale: 1.08,
+    rotate: 0,
+    translateX: 0,
+    translateY: -8,
+    opacity: 0.9,
 };
 
 type PresetConfig = {
@@ -38,7 +60,7 @@ const LOOP_REPEAT: Record<AnimationLoopMode, number> = {
     continuous: Infinity,
 };
 
-const PRESET_CONFIGS: Record<AnimationPreset, PresetConfig> = {
+const PRESET_CONFIGS: Record<StandardAnimationPreset, PresetConfig> = {
     fade: {
         hidden: { opacity: 0 },
         rest: { opacity: 1 },
@@ -88,6 +110,14 @@ export function getAnimationVariants(
     preset: AnimationPreset,
     playback: AnimationPlaybackSettings = DEFAULT_PLAYBACK,
 ): Variants {
+    if (preset === "custom") {
+        return {
+            hidden: {},
+            rest: {},
+            play: {},
+        };
+    }
+
     const config = PRESET_CONFIGS[preset];
 
     return {
@@ -115,12 +145,12 @@ export function serializeVariantsForCode(variants: Variants): string {
     ).replace(/"__INFINITY__"/g, "Infinity");
 }
 
-export const ANIMATION_VARIANTS: Record<AnimationPreset, Variants> = (
-    Object.keys(PRESET_CONFIGS) as AnimationPreset[]
+export const ANIMATION_VARIANTS: Record<StandardAnimationPreset, Variants> = (
+    Object.keys(PRESET_CONFIGS) as StandardAnimationPreset[]
 ).reduce((accumulator, preset) => {
     accumulator[preset] = getAnimationVariants(preset, DEFAULT_PLAYBACK);
     return accumulator;
-}, {} as Record<AnimationPreset, Variants>);
+}, {} as Record<StandardAnimationPreset, Variants>);
 
 export const SPRING_TRANSITION = {
     type: "spring",
