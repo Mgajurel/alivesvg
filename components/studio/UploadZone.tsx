@@ -45,8 +45,8 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                     className={cn(
                         "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all",
                         mode === "upload"
-                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)]"
-                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
+                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)] hover:bg-black dark:!bg-[#f2f2f2] dark:!text-[#111111] dark:shadow-[0_8px_18px_rgba(0,0,0,0.25)] dark:hover:!bg-white"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-[#1b1b1b] dark:hover:text-slate-200",
                     )}
                 >
                     <UploadCloud size={16} /> Upload File
@@ -57,8 +57,8 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                     className={cn(
                         "flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all",
                         mode === "paste"
-                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)]"
-                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
+                            ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.3)] hover:bg-black dark:!bg-[#f2f2f2] dark:!text-[#111111] dark:shadow-[0_8px_18px_rgba(0,0,0,0.25)] dark:hover:!bg-white"
+                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-[#1b1b1b] dark:hover:text-slate-200",
                     )}
                 >
                     <Code2 size={16} /> Paste SVG
@@ -71,16 +71,16 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                     className={cn(
                         "group relative flex h-[22rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed px-6 text-center transition-all sm:px-8",
                         isDragActive
-                            ? "border-[#ff6d3a] bg-[#fff3ec] shadow-[0_14px_42px_rgba(255,109,58,0.2)]"
-                            : "border-slate-300/90 bg-white/90 hover:border-[#ff6d3a]/60 hover:bg-[#fffaf6] hover:shadow-[0_14px_36px_rgba(17,32,58,0.12)]",
+                            ? "border-[#111111] bg-[#ededed] shadow-[0_14px_42px_rgba(0,0,0,0.12)]"
+                            : "border-slate-300/90 bg-white/90 hover:border-[#111111]/50 hover:bg-[#f4f4f4] hover:shadow-[0_14px_36px_rgba(0,0,0,0.08)]",
                     )}
                 >
                     <input {...getInputProps()} />
 
-                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,109,58,0.18),transparent_36%),radial-gradient(circle_at_78%_80%,rgba(15,125,138,0.18),transparent_32%)] opacity-70" />
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(0,0,0,0.08),transparent_36%),radial-gradient(circle_at_78%_80%,rgba(0,0,0,0.06),transparent_32%)] opacity-70" />
 
                     <div className="relative z-10">
-                        <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-900/10 bg-white text-[#ff6d3a] shadow-sm">
+                        <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-900/10 bg-white text-[#111111] shadow-sm">
                             <UploadCloud size={28} />
                         </div>
                         <h3 className="text-xl font-semibold text-slate-900">Drop your SVG into the stage</h3>
@@ -92,7 +92,7 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                             <span className="rounded-full border border-slate-900/10 bg-white px-3 py-1 font-medium text-slate-600">
                                 .svg only
                             </span>
-                            <span className="inline-flex items-center gap-1 rounded-full border border-[#ff6d3a]/30 bg-[#fff0e8] px-3 py-1 font-medium text-[#a94824]">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[#111111]/20 bg-[#eeeeee] px-3 py-1 font-medium text-[#2b2b2b]">
                                 <Sparkles className="h-3.5 w-3.5" />
                                 Live preview ready
                             </span>
@@ -103,7 +103,7 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                 <div className="flex h-[22rem] flex-col gap-4 rounded-[28px] border border-slate-900/10 bg-white/90 p-4 shadow-[0_12px_34px_rgba(17,32,58,0.08)] sm:p-5">
                     <Textarea
                         placeholder="<svg>...</svg>"
-                        className="h-full flex-1 resize-none rounded-2xl border-slate-200 bg-slate-50/70 font-mono text-xs leading-relaxed text-slate-800 focus-visible:ring-[#ff6d3a]"
+                        className="h-full flex-1 resize-none rounded-2xl border-slate-200 bg-slate-50/70 font-mono text-xs leading-relaxed text-slate-800 focus-visible:ring-[#111111]"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                     />
@@ -114,7 +114,7 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
                         <Button
                             onClick={handlePasteSubmit}
                             disabled={!text.trim()}
-                            className="rounded-full !bg-[#ff6d3a] !text-white !border-[#ff6d3a] px-5 hover:!bg-[#ea5f2f]"
+                            className="rounded-full !bg-[#111111] !text-white !border-[#111111] px-5 hover:!bg-[#000000]"
                         >
                             Load into canvas
                         </Button>

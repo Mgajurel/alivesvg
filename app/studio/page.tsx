@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "framer-motion";
 import { UploadZone } from "@/components/studio/UploadZone";
@@ -11,11 +11,14 @@ import {
     AnimationLoopMode,
     AnimationPreset,
     AnimationTriggerMode,
+    DEFAULT_CUSTOM_SETTINGS,
     LOOP_MODE_LABELS,
     TRIGGER_MODE_LABELS,
 } from "@/constants/animations";
 import { Button } from "@/components/ui/Button";
 import { ArrowLeft, FileCode2, Sparkles, Upload, WandSparkles } from "lucide-react";
+import { annotateSvgContent, applySelection } from "@/lib/svgParts";
+import { buildCustomCssSnippet } from "@/lib/animationCss";
 
 const reveal: Variants = {
     hidden: { opacity: 0 },
@@ -47,7 +50,7 @@ const STUDIO_HIGHLIGHTS = [
     },
     {
         title: "Export code",
-        description: "Copy a React + Framer Motion snippet as your production starting point.",
+        description: "Copy a React snippet with path-level motion styles baked in.",
         icon: FileCode2,
     },
 ] as const;
@@ -70,30 +73,68 @@ function toComponentName(rawName: string, fallback = "MyIcon") {
 }
 
 export default function StudioPage() {
-    const [svgContent, setSvgContent] = useState<string | null>(null);
+    const [svgBase, setSvgBase] = useState<string | null>(null);
+    const [selectedPartIds, setSelectedPartIds] = useState<string[]>([]);
     const [fileName, setFileName] = useState<string>("MyIcon");
     const [animation, setAnimation] = useState<AnimationPreset>("spin");
     const [triggerMode, setTriggerMode] = useState<AnimationTriggerMode>("always");
     const [loopMode, setLoopMode] = useState<AnimationLoopMode>("continuous");
+    const [customSettings, setCustomSettings] = useState(DEFAULT_CUSTOM_SETTINGS);
+    const [customCss, setCustomCss] = useState("");
+    const [useCustomCss, setUseCustomCss] = useState(false);
+    const [exportMode, setExportMode] = useState<"package" | "inline">("package");
+
+    const previewSvg = useMemo(() => {
+        if (!svgBase) return null;
+        return applySelection(svgBase, selectedPartIds, { highlight: true });
+    }, [svgBase, selectedPartIds]);
+
+    const exportSvg = useMemo(() => {
+        if (!svgBase) return null;
+        return applySelection(svgBase, selectedPartIds, { highlight: false });
+    }, [svgBase, selectedPartIds]);
+
+    const resolvedCustomCss = useMemo(() => {
+        if (animation !== "custom") return null;
+        if (useCustomCss) {
+            return customCss;
+        }
+        return buildCustomCssSnippet(customSettings);
+    }, [animation, customCss, customSettings, useCustomCss]);
+
+    const handleSvgLoad = (content: string, name: string) => {
+        const { annotatedSvg, autoSelectedIds } = annotateSvgContent(content);
+        setSvgBase(annotatedSvg);
+        setSelectedPartIds(autoSelectedIds);
+        setFileName(name);
+    };
 
     const handleUpload = (file: File) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target?.result as string;
-            setSvgContent(content);
-            setFileName(toComponentName(file.name));
+            handleSvgLoad(content, toComponentName(file.name));
         };
         reader.readAsText(file);
     };
 
     const resetUpload = () => {
-        setSvgContent(null);
+        setSvgBase(null);
+        setSelectedPartIds([]);
         setFileName("MyIcon");
     };
 
+    const handleTogglePart = (partId: string) => {
+        setSelectedPartIds((prev) => (
+            prev.includes(partId)
+                ? prev.filter((id) => id !== partId)
+                : [...prev, partId]
+        ));
+    };
+
     return (
-        <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,var(--alivesvg-bg)_0%,#fff_52%,var(--alivesvg-bg-alt)_100%)] text-[var(--alivesvg-ink)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(255,109,58,0.2),transparent_34%),radial-gradient(circle_at_86%_16%,rgba(15,125,138,0.18),transparent_32%),linear-gradient(rgba(19,35,58,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(19,35,58,0.05)_1px,transparent_1px)] bg-[size:100%_100%,100%_100%,28px_28px,28px_28px] [mask-image:linear-gradient(to_bottom,black,black,transparent_95%)]" />
+        <div className="relative min-h-screen overflow-hidden bg-[linear-gradient(180deg,var(--alivesvg-bg)_0%,var(--alivesvg-bg-alt)_52%,var(--alivesvg-bg)_100%)] text-[var(--alivesvg-ink)]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,rgba(0,0,0,0.06),transparent_34%),radial-gradient(circle_at_86%_16%,rgba(0,0,0,0.04),transparent_32%),linear-gradient(rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[size:100%_100%,100%_100%,28px_28px,28px_28px] [mask-image:linear-gradient(to_bottom,black,black,transparent_95%)]" />
 
             <main className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-10 pt-6 sm:px-6 md:pb-12 lg:px-8 lg:pt-8">
                 <motion.header
@@ -103,7 +144,7 @@ export default function StudioPage() {
                     className="mb-6 flex flex-wrap items-center justify-between gap-3"
                 >
                     <motion.div variants={rise} className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <Button asChild variant="ghost" size="sm" className="rounded-full text-slate-700 hover:bg-white/80">
+                        <Button asChild variant="outline" size="sm" className="rounded-full">
                             <Link href="/">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Home
@@ -116,17 +157,17 @@ export default function StudioPage() {
                     </motion.div>
 
                     <motion.div variants={rise} className="flex items-center gap-2">
-                        {svgContent && (
-                            <Button
-                                variant="outline"
-                                onClick={resetUpload}
-                                className="rounded-full border-slate-900/15 bg-white/80 text-slate-700 hover:bg-white"
-                            >
-                                <Upload className="mr-2 h-4 w-4" />
-                                Upload New
-                            </Button>
+                        {svgBase && (
+                        <Button
+                            variant="outline"
+                            onClick={resetUpload}
+                            className="rounded-full"
+                        >
+                            <Upload className="mr-2 h-4 w-4" />
+                            Upload New
+                        </Button>
                         )}
-                        <Button asChild variant="outline" className="rounded-full border-slate-900/15 bg-white/80 text-slate-700 hover:bg-white">
+                        <Button asChild variant="outline" className="rounded-full">
                             <Link href="/library">Icon Library</Link>
                         </Button>
                     </motion.div>
@@ -140,7 +181,7 @@ export default function StudioPage() {
                 >
                     <motion.div variants={rise} className="grid gap-6 lg:grid-cols-[1.15fr_1fr] lg:items-center">
                         <div>
-                            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#fff1ea] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#a94824]">
+                            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-[#f0f0f0] px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#2b2b2b]">
                                 <WandSparkles className="h-3.5 w-3.5" />
                                 Motion workspace
                             </p>
@@ -160,7 +201,7 @@ export default function StudioPage() {
                                         key={item.title}
                                         className="rounded-2xl border border-slate-900/10 bg-white/85 p-4 shadow-sm"
                                     >
-                                        <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#ecfbff] text-[#0f7d8a]">
+                                        <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#f1f1f1] text-[#333333]">
                                             <Icon className="h-4 w-4" />
                                         </span>
                                         <p className="text-sm font-semibold text-slate-900">{item.title}</p>
@@ -188,31 +229,33 @@ export default function StudioPage() {
                                     Workspace
                                 </p>
                                 <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                                    {svgContent ? fileName : "Upload your first SVG"}
-                                </h2>
+                                {svgBase ? fileName : "Upload your first SVG"}
+                            </h2>
                             </div>
                             <span className="inline-flex items-center rounded-full border border-slate-900/10 bg-white px-3 py-1 text-xs font-medium text-slate-600">
-                                {svgContent ? "Ready to animate" : "Awaiting input"}
+                                {svgBase ? "Ready to animate" : "Awaiting input"}
                             </span>
                             <span className="inline-flex items-center rounded-full border border-slate-900/10 bg-white px-3 py-1 text-xs font-medium text-slate-600">
                                 {TRIGGER_MODE_LABELS[triggerMode]} • {LOOP_MODE_LABELS[loopMode]}
                             </span>
                         </div>
 
-                        {!svgContent ? (
+                        {!svgBase ? (
                             <UploadZone
                                 onUpload={handleUpload}
                                 onPaste={(content) => {
-                                    setSvgContent(content);
-                                    setFileName("PastedIcon");
+                                    handleSvgLoad(content, "PastedIcon");
                                 }}
                             />
                         ) : (
                             <StudioCanvas
-                                svgContent={svgContent}
+                                svgContent={previewSvg}
                                 animation={animation}
                                 triggerMode={triggerMode}
                                 loopMode={loopMode}
+                                selectedPartIds={selectedPartIds}
+                                onTogglePart={handleTogglePart}
+                                customStyle={resolvedCustomCss}
                             />
                         )}
                     </motion.div>
@@ -225,25 +268,71 @@ export default function StudioPage() {
                             onTriggerModeChange={setTriggerMode}
                             loopMode={loopMode}
                             onLoopModeChange={setLoopMode}
+                            customSettings={customSettings}
+                            onCustomSettingsChange={setCustomSettings}
+                            customCss={customCss}
+                            onCustomCssChange={setCustomCss}
+                            useCustomCss={useCustomCss}
+                            onUseCustomCssChange={setUseCustomCss}
                         />
 
-                        {svgContent ? (
-                            <CodePreview
-                                animation={animation}
-                                svgName={fileName}
-                                triggerMode={triggerMode}
-                                loopMode={loopMode}
-                            />
+                        {svgBase ? (
+                            <>
+                                <div className="rounded-[20px] border border-slate-900/10 bg-white/80 px-4 py-3 text-sm text-slate-600 shadow-[0_14px_36px_rgba(15,28,48,0.08)]">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                        Export mode
+                                    </p>
+                                    <div className="mt-2 inline-flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setExportMode("package")}
+                                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                                exportMode === "package"
+                                                    ? "border-[#111111]/50 bg-[#ededed] text-[#222222]"
+                                                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                                            }`}
+                                        >
+                                            AliveSVG package
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setExportMode("inline")}
+                                            className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                                exportMode === "inline"
+                                                    ? "border-[#111111]/40 bg-[#f1f1f1] text-[#333333]"
+                                                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                                            }`}
+                                        >
+                                            Inline CSS
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Package mode assumes you install <span className="font-semibold text-slate-700">alivesvg</span>.
+                                    </p>
+                                </div>
+
+                                <CodePreview
+                                    animation={animation}
+                                    svgName={fileName}
+                                    triggerMode={triggerMode}
+                                    loopMode={loopMode}
+                                    svgMarkup={exportSvg}
+                                    exportMode={exportMode}
+                                    customSettings={customSettings}
+                                    customCss={customCss}
+                                    useCustomCss={useCustomCss}
+                                />
+                            </>
                         ) : (
-                            <div className="rounded-[24px] border border-slate-900/10 bg-[#12253f] p-5 text-[#d0e2f8] shadow-[0_18px_44px_rgba(8,15,28,0.26)] sm:p-6">
-                                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8fb6d8]">
+                            <div className="rounded-[24px] border border-slate-900/10 bg-[#111111] p-5 text-[#e0e0e0] shadow-[0_18px_44px_rgba(0,0,0,0.24)] sm:p-6">
+                                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#bdbdbd]">
                                     Export
                                 </p>
                                 <p className="mt-2 text-lg font-semibold text-white">
                                     Copy-ready code appears here.
                                 </p>
-                                <p className="mt-2 text-sm leading-relaxed text-[#a8c7e6]">
-                                    Load an SVG to generate a React + Framer Motion starter snippet tied to your selected preset.
+                                <p className="mt-2 text-sm leading-relaxed text-[#b0b0b0]">
+                                    Load an SVG to generate a React starter snippet tied to your selected preset.
                                 </p>
                             </div>
                         )}

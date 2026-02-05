@@ -5,11 +5,14 @@ import {
     AnimationLoopMode,
     AnimationPreset,
     AnimationTriggerMode,
+    CustomAnimationSettings,
+    StandardAnimationPreset,
     getAnimationVariants,
     serializeVariantsForCode,
 } from "@/constants/animations";
 import { Button } from "@/components/ui/Button";
 import { Check, Copy } from "lucide-react";
+import { buildCssSnippet, buildCustomCssSnippet } from "@/lib/animationCss";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
 // Importing a language support if needed, assuming default bundle has javascript/jsx or we load it.
@@ -22,6 +25,11 @@ interface CodePreviewProps {
     svgName?: string;
     triggerMode: AnimationTriggerMode;
     loopMode: AnimationLoopMode;
+    svgMarkup?: string | null;
+    exportMode: "package" | "inline";
+    customSettings: CustomAnimationSettings;
+    customCss: string;
+    useCustomCss: boolean;
 }
 
 export function CodePreview({
@@ -29,6 +37,11 @@ export function CodePreview({
     svgName = "MyIcon",
     triggerMode,
     loopMode,
+    svgMarkup,
+    exportMode,
+    customSettings,
+    customCss,
+    useCustomCss,
 }: CodePreviewProps) {
     const [copied, setCopied] = useState(false);
 
@@ -38,7 +51,57 @@ export function CodePreview({
         ? `      animate="rest"\n      whileHover="play"`
         : `      animate="play"`;
 
-    const codeString = `import { motion } from "framer-motion";
+    const sanitizedSvg = (svgMarkup ?? "")
+        .replace(/`/g, "\\`")
+        .replace(/\$\{/g, "\\${");
+    const hasSvgMarkup = Boolean(svgMarkup);
+    const isCustom = animation === "custom";
+    const resolvedCustomCss = isCustom
+        ? (useCustomCss ? customCss : buildCustomCssSnippet(customSettings))
+        : "";
+    const sanitizedCustomCss = resolvedCustomCss
+        .replace(/`/g, "\\`")
+        .replace(/\$\{/g, "\\${");
+    const sanitizedPresetCss = !isCustom
+        ? buildCssSnippet(animation as StandardAnimationPreset)
+            .replace(/`/g, "\\`")
+            .replace(/\$\{/g, "\\${")
+        : "";
+
+    const codeString = hasSvgMarkup
+        ? exportMode === "package"
+            ? `import { AliveSvg } from "alivesvg";
+
+const svgMarkup = \`${sanitizedSvg}\`;
+${isCustom ? `\nconst customCss = \`${sanitizedCustomCss}\`;\n` : ""}
+export function Animated${svgName}() {
+  return (
+    <AliveSvg
+      svg={svgMarkup}
+      preset="${animation}"
+      trigger="${triggerMode}"
+      loop="${loopMode}"
+${isCustom ? "      customCss={customCss}\n" : ""}    />
+  );
+}`
+            : `const svgMarkup = \`${sanitizedSvg}\`;
+
+const styles = \`${isCustom ? sanitizedCustomCss : sanitizedPresetCss}\`;
+
+export function Animated${svgName}() {
+  return (
+    <div
+      className="alivesvg-target"
+      data-preset="${animation}"
+      data-trigger="${triggerMode}"
+      data-loop="${loopMode}"
+    >
+      <style>{styles}</style>
+      <span dangerouslySetInnerHTML={{ __html: svgMarkup }} />
+    </div>
+  );
+}`
+        : `import { motion } from "framer-motion";
 import ${svgName} from "./${svgName}";
 
 const variants = ${variantString};
@@ -71,19 +134,19 @@ ${animateLines}
     };
 
     return (
-        <div className="overflow-hidden rounded-[24px] border border-[#0f2238] bg-[#0f2238] text-[#d7ebff] shadow-[0_20px_52px_rgba(10,18,32,0.34)]">
+        <div className="overflow-hidden rounded-[24px] border border-[#111111] bg-[#111111] text-[#e6e6e6] shadow-[0_20px_52px_rgba(0,0,0,0.28)]">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-4 py-3 sm:px-5">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#8fb6d8]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#bdbdbd]">
                         React export
                     </p>
                     <p className="text-sm font-medium text-white">Animated{svgName}.tsx</p>
                 </div>
                 <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={handleCopy}
-                    className="rounded-full border border-white/10 bg-white/5 text-[#c4dbf3] hover:bg-white/10 hover:text-white"
+                    className="rounded-full text-xs"
                 >
                     {copied ? <Check size={14} className="mr-2 text-emerald-400" /> : <Copy size={14} className="mr-2" />}
                     {copied ? "Copied" : "Copy Code"}
@@ -91,7 +154,7 @@ ${animateLines}
             </div>
 
             <div className="max-h-[410px] overflow-auto">
-                <pre className="!m-0 !bg-[#0f2238] !p-4 text-xs sm:text-sm">
+                <pre className="!m-0 !bg-[#111111] !p-4 text-xs sm:text-sm">
                     <code className="language-tsx">{codeString}</code>
                 </pre>
             </div>

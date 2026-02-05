@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { IconItem } from "@/constants/library";
 import {
-    AnimationPreset,
     AnimationPlaybackSettings,
     LOOP_MODE_LABELS,
     TRIGGER_MODE_LABELS,
     getAnimationVariants,
     getMotionStateTargets,
     serializeVariantsForCode,
+    StandardAnimationPreset,
 } from "@/constants/animations";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { Copy, Check } from "lucide-react";
+import { buildCssSnippet } from "@/lib/animationCss";
 
 interface IconCardProps {
     item: IconItem;
@@ -25,7 +26,7 @@ function toComponentName(iconName: string) {
     return iconName.replace(/[^a-zA-Z0-9]+/g, "");
 }
 
-const PRESET_LABELS: Record<AnimationPreset, string> = {
+const PRESET_LABELS: Record<StandardAnimationPreset, string> = {
     fade: "Fade",
     scale: "Scale",
     slide: "Slide",
@@ -36,10 +37,28 @@ const PRESET_LABELS: Record<AnimationPreset, string> = {
 
 export function IconCard({ item, playback }: IconCardProps) {
     const [copied, setCopied] = useState(false);
+    const iconRef = useRef<HTMLDivElement | null>(null);
 
     const Icon = item.icon;
     const variants = getAnimationVariants(item.defaultAnimation, playback);
     const motionStateTargets = getMotionStateTargets(playback.triggerMode);
+    const hasPartTargets = Boolean(item.animatedParts?.length);
+
+    useEffect(() => {
+        if (!hasPartTargets) return;
+        const root = iconRef.current;
+        if (!root) return;
+        const svg = root.querySelector("svg");
+        if (!svg) return;
+
+        item.animatedParts?.forEach((selector) => {
+            svg.querySelectorAll(selector).forEach((node) => {
+                if (node instanceof Element) {
+                    node.setAttribute("data-alivesvg-animate", "true");
+                }
+            });
+        });
+    }, [hasPartTargets, item.animatedParts]);
 
     const handleCopy = async () => {
         const componentName = toComponentName(item.name);
@@ -47,7 +66,47 @@ export function IconCard({ item, playback }: IconCardProps) {
             ? `      animate="rest"\n      whileHover="play"`
             : `      animate="play"`;
 
-        const code = `import { motion } from "framer-motion";
+        const code = hasPartTargets
+            ? `import { useEffect, useRef } from "react";
+import { ${componentName} } from "lucide-react";
+
+const parts = ${JSON.stringify(item.animatedParts ?? [], null, 2)};
+
+const styles = \`${buildCssSnippet(item.defaultAnimation)
+                .replace(/`/g, "\\`")
+                .replace(/\$\{/g, "\\${")}\`;
+
+export function Animated${componentName}() {
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const svg = root.querySelector("svg");
+    if (!svg) return;
+    parts.forEach((selector) => {
+      svg.querySelectorAll(selector).forEach((node) => {
+        if (node instanceof Element) {
+          node.setAttribute("data-alivesvg-animate", "true");
+        }
+      });
+    });
+  }, []);
+
+  return (
+    <span
+      ref={ref}
+      className="alivesvg-target"
+      data-preset="${item.defaultAnimation}"
+      data-trigger="${playback.triggerMode}"
+      data-loop="${playback.loopMode}"
+    >
+      <style>{styles}</style>
+      <${componentName} />
+    </span>
+  );
+}`
+            : `import { motion } from "framer-motion";
 import { ${componentName} } from "lucide-react";
 
 const variants = ${serializeVariantsForCode(variants)};
@@ -75,9 +134,9 @@ ${animateLines}
 
     return (
         <Card
-            className="group relative aspect-square overflow-hidden rounded-[24px] border border-slate-900/10 bg-white/85 p-4 shadow-[0_14px_36px_rgba(15,28,48,0.1)] transition-all hover:-translate-y-1 hover:border-[#ff6d3a]/40 hover:shadow-[0_20px_44px_rgba(15,28,48,0.16)] sm:p-5"
+            className="group relative aspect-square overflow-hidden rounded-[24px] border border-slate-900/10 bg-white/85 p-4 shadow-[0_14px_36px_rgba(15,28,48,0.1)] transition-all hover:-translate-y-1 hover:border-[#111111]/30 hover:shadow-[0_20px_44px_rgba(0,0,0,0.14)] sm:p-5"
         >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_14%,rgba(255,109,58,0.16),transparent_34%),radial-gradient(circle_at_78%_82%,rgba(15,125,138,0.15),transparent_30%)] opacity-80" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_14%,rgba(0,0,0,0.06),transparent_34%),radial-gradient(circle_at_78%_82%,rgba(0,0,0,0.05),transparent_30%)] opacity-80" />
 
             <div className="relative z-10 flex h-full flex-col">
                 <div className="mb-3 flex items-center justify-between gap-2">
@@ -86,9 +145,9 @@ ${animateLines}
                     </span>
 
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
-                        className="h-8 w-8 rounded-full border border-slate-900/10 bg-white/80 text-slate-500 hover:bg-white hover:text-slate-900"
+                        className="h-8 w-8 rounded-full"
                         onClick={(e) => {
                             e.stopPropagation();
                             handleCopy();
@@ -99,15 +158,27 @@ ${animateLines}
                 </div>
 
                 <div className="flex flex-1 items-center justify-center">
-                    <motion.div
-                        initial="hidden"
-                        animate={motionStateTargets.animate}
-                        whileHover={motionStateTargets.whileHover}
-                        variants={variants}
-                        className="inline-flex h-20 w-20 items-center justify-center rounded-[22px] border border-slate-900/10 bg-white/90 shadow-sm"
-                    >
-                        <Icon size={40} strokeWidth={1.7} className="text-slate-800" />
-                    </motion.div>
+                    {hasPartTargets ? (
+                        <div
+                            ref={iconRef}
+                            className="alivesvg-target inline-flex h-20 w-20 items-center justify-center rounded-[22px] border border-slate-900/10 bg-white/90 shadow-sm"
+                            data-preset={item.defaultAnimation}
+                            data-trigger={playback.triggerMode}
+                            data-loop={playback.loopMode}
+                        >
+                            <Icon size={40} strokeWidth={1.7} className="text-slate-800" />
+                        </div>
+                    ) : (
+                        <motion.div
+                            initial="hidden"
+                            animate={motionStateTargets.animate}
+                            whileHover={motionStateTargets.whileHover}
+                            variants={variants}
+                            className="inline-flex h-20 w-20 items-center justify-center rounded-[22px] border border-slate-900/10 bg-white/90 shadow-sm"
+                        >
+                            <Icon size={40} strokeWidth={1.7} className="text-slate-800" />
+                        </motion.div>
+                    )}
                 </div>
 
                 <div className="mt-3 text-center">
