@@ -15,8 +15,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AliveSVG - Animated SVG Components",
-  description: "A modern toolkit for beautiful, animated vector graphics.",
+  metadataBase: new URL("https://alivesvg.com"),
+  title: {
+    default: "AliveSVG - Animated SVG Components",
+    template: "%s | AliveSVG",
+  },
+  description:
+    "A modern toolkit for beautiful, animated vector graphics. Browse curated animated icons or upload your own SVGs to the studio.",
+  openGraph: {
+    title: "AliveSVG - Animated SVG Components",
+    description:
+      "A modern toolkit for beautiful, animated vector graphics. Browse curated animated icons or upload your own SVGs to the studio.",
+    url: "https://alivesvg.com",
+    siteName: "AliveSVG",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AliveSVG - Animated SVG Components",
+    description:
+      "A modern toolkit for beautiful, animated vector graphics.",
+  },
 };
 
 export default function RootLayout({

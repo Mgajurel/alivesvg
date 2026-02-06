@@ -116,7 +116,7 @@ export default function Home() {
             </span>
           </Link>
 
-          <div className="hidden items-center gap-3 sm:flex">
+          <nav aria-label="Main navigation" className="hidden items-center gap-3 sm:flex">
             <Button asChild variant="outline" className="rounded-full">
               <Link href="/library">Library</Link>
             </Button>
@@ -125,7 +125,7 @@ export default function Home() {
               onClick={() => router.push("/studio")}
               className="w-auto min-w-[140px] px-4 text-sm"
             />
-          </div>
+          </nav>
         </header>
 
         <section className="grid items-center gap-10 pb-16 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:pb-24">

@@ -147,6 +147,7 @@ ${animateLines}
                     <Button
                         variant="outline"
                         size="icon"
+                        aria-label="Copy code"
                         className="h-8 w-8 rounded-full"
                         onClick={(e) => {
                             e.stopPropagation();
