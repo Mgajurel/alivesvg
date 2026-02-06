@@ -68,6 +68,7 @@ export function UploadZone({ onUpload, onPaste }: UploadZoneProps) {
             {mode === "upload" ? (
                 <div
                     {...getRootProps()}
+                    aria-label="SVG file upload dropzone"
                     className={cn(
                         "group relative flex h-[22rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[28px] border border-dashed px-6 text-center transition-all sm:px-8",
                         isDragActive

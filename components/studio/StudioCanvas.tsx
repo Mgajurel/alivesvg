@@ -8,6 +8,7 @@ import {
     LOOP_MODE_LABELS,
     TRIGGER_MODE_LABELS,
 } from "@/constants/animations";
+import { sanitizeSvg } from "@/lib/sanitizeSvg";
 
 interface StudioCanvasProps {
     svgContent: string | null;
@@ -69,7 +70,7 @@ export function StudioCanvas({
                     onClick={handlePartToggle}
                 >
                     {customStyle ? <style>{customStyle}</style> : null}
-                    <span dangerouslySetInnerHTML={{ __html: svgContent }} />
+                    <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgContent) }} />
                 </div>
             </div>
 

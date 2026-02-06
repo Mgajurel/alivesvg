@@ -84,9 +84,17 @@ export function Animated${svgName}() {
 ${isCustom ? "      customCss={customCss}\n" : ""}    />
   );
 }`
-            : `const svgMarkup = \`${sanitizedSvg}\`;
+            : `import DOMPurify from "dompurify";
+
+const svgMarkup = \`${sanitizedSvg}\`;
 
 const styles = \`${isCustom ? sanitizedCustomCss : sanitizedPresetCss}\`;
+
+function sanitizeSvg(dirty: string): string {
+  return DOMPurify.sanitize(dirty, {
+    USE_PROFILES: { svg: true, svgFilters: true },
+  });
+}
 
 export function Animated${svgName}() {
   return (
@@ -97,7 +105,7 @@ export function Animated${svgName}() {
       data-loop="${loopMode}"
     >
       <style>{styles}</style>
-      <span dangerouslySetInnerHTML={{ __html: svgMarkup }} />
+      <span dangerouslySetInnerHTML={{ __html: sanitizeSvg(svgMarkup) }} />
     </div>
   );
 }`
@@ -145,6 +153,7 @@ ${animateLines}
                 <Button
                     variant="outline"
                     size="sm"
+                    aria-label="Copy code"
                     onClick={handleCopy}
                     className="rounded-full text-xs"
                 >
