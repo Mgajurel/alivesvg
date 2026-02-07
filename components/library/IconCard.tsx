@@ -14,12 +14,17 @@ import {
 } from "@/constants/animations";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Lock } from "lucide-react";
 import { buildCssSnippet } from "@/lib/animationCss";
+import type { PlanTier } from "@/types/database";
 
 interface IconCardProps {
     item: IconItem;
     playback: AnimationPlaybackSettings;
+    userPlan?: PlanTier;
+    isSignedIn?: boolean;
+    onRequireAuth?: () => void;
+    onRequirePurchase?: () => void;
 }
 
 function toComponentName(iconName: string) {
@@ -35,7 +40,14 @@ const PRESET_LABELS: Record<StandardAnimationPreset, string> = {
     pulse: "Pulse",
 };
 
-export function IconCard({ item, playback }: IconCardProps) {
+export function IconCard({
+    item,
+    playback,
+    userPlan = "free",
+    isSignedIn = false,
+    onRequireAuth,
+    onRequirePurchase,
+}: IconCardProps) {
     const [copied, setCopied] = useState(false);
     const iconRef = useRef<HTMLDivElement | null>(null);
 
@@ -43,6 +55,7 @@ export function IconCard({ item, playback }: IconCardProps) {
     const variants = getAnimationVariants(item.defaultAnimation, playback);
     const motionStateTargets = getMotionStateTargets(playback.triggerMode);
     const hasPartTargets = Boolean(item.animatedParts?.length);
+    const isLocked = item.tier === "premium" && userPlan === "free";
 
     useEffect(() => {
         if (!hasPartTargets) return;
@@ -61,6 +74,16 @@ export function IconCard({ item, playback }: IconCardProps) {
     }, [hasPartTargets, item.animatedParts]);
 
     const handleCopy = async () => {
+        if (!isSignedIn) {
+            onRequireAuth?.();
+            return;
+        }
+
+        if (isLocked) {
+            onRequirePurchase?.();
+            return;
+        }
+
         const componentName = toComponentName(item.name);
         const animateLines = playback.triggerMode === "hover"
             ? `      animate="rest"\n      whileHover="play"`
@@ -137,6 +160,12 @@ ${animateLines}
             className="group relative aspect-square overflow-hidden rounded-[24px] border border-slate-900/10 bg-white/85 p-4 shadow-[0_14px_36px_rgba(15,28,48,0.1)] transition-all hover:-translate-y-1 hover:border-[#111111]/30 hover:shadow-[0_20px_44px_rgba(0,0,0,0.14)] sm:p-5"
         >
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_14%,rgba(0,0,0,0.06),transparent_34%),radial-gradient(circle_at_78%_82%,rgba(0,0,0,0.05),transparent_30%)] opacity-80" />
+
+            {isLocked && (
+                <div className="absolute right-3 top-3 z-20 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900/80 text-white">
+                    <Lock className="h-3 w-3" />
+                </div>
+            )}
 
             <div className="relative z-10 flex h-full flex-col">
                 <div className="mb-3 flex items-center justify-between gap-2">

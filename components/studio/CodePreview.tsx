@@ -15,10 +15,10 @@ import { Check, Copy } from "lucide-react";
 import { buildCssSnippet, buildCustomCssSnippet } from "@/lib/animationCss";
 import Prism from "prismjs";
 import "prismjs/themes/prism-tomorrow.css";
-// Importing a language support if needed, assuming default bundle has javascript/jsx or we load it.
-// Next.js might not load all prism languages by default.
 import "prismjs/components/prism-jsx";
 import "prismjs/components/prism-tsx";
+import type { PlanTier } from "@/types/database";
+import { FREE_STUDIO_EXPORT_LIMIT } from "@/types/database";
 
 interface CodePreviewProps {
     animation: AnimationPreset;
@@ -30,6 +30,12 @@ interface CodePreviewProps {
     customSettings: CustomAnimationSettings;
     customCss: string;
     useCustomCss: boolean;
+    isSignedIn?: boolean;
+    userPlan?: PlanTier;
+    studioUsageRemaining?: number | null;
+    onRequireAuth?: () => void;
+    onRequirePurchase?: () => void;
+    onExportRecorded?: () => void;
 }
 
 export function CodePreview({
@@ -42,6 +48,12 @@ export function CodePreview({
     customSettings,
     customCss,
     useCustomCss,
+    isSignedIn = false,
+    userPlan = "free",
+    studioUsageRemaining,
+    onRequireAuth,
+    onRequirePurchase,
+    onExportRecorded,
 }: CodePreviewProps) {
     const [copied, setCopied] = useState(false);
 
@@ -131,7 +143,36 @@ ${animateLines}
         Prism.highlightAll();
     }, [codeString]);
 
+    const isPaid = userPlan !== "free";
+    const remaining = studioUsageRemaining;
+
     const handleCopy = async () => {
+        if (!isSignedIn) {
+            onRequireAuth?.();
+            return;
+        }
+
+        if (!isPaid && remaining !== null && remaining !== undefined && remaining <= 0) {
+            onRequirePurchase?.();
+            return;
+        }
+
+        // For free users, record the export first
+        if (!isPaid) {
+            try {
+                const res = await fetch("/api/user/studio-export", {
+                    method: "POST",
+                });
+                if (res.status === 403) {
+                    onRequirePurchase?.();
+                    return;
+                }
+                onExportRecorded?.();
+            } catch {
+                // Allow copy even if tracking fails
+            }
+        }
+
         try {
             await navigator.clipboard.writeText(codeString);
             setCopied(true);
@@ -150,16 +191,25 @@ ${animateLines}
                     </p>
                     <p className="text-sm font-medium text-white">Animated{svgName}.tsx</p>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    aria-label="Copy code"
-                    onClick={handleCopy}
-                    className="rounded-full text-xs"
-                >
-                    {copied ? <Check size={14} className="mr-2 text-emerald-400" /> : <Copy size={14} className="mr-2" />}
-                    {copied ? "Copied" : "Copy Code"}
-                </Button>
+                <div className="flex items-center gap-3">
+                    {isSignedIn && (
+                        <span className="text-xs text-[#b0b0b0]">
+                            {isPaid
+                                ? "Unlimited exports"
+                                : `${remaining ?? 0} of ${FREE_STUDIO_EXPORT_LIMIT} free exports left`}
+                        </span>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label="Copy code"
+                        onClick={handleCopy}
+                        className="rounded-full text-xs"
+                    >
+                        {copied ? <Check size={14} className="mr-2 text-emerald-400" /> : <Copy size={14} className="mr-2" />}
+                        {copied ? "Copied" : "Copy Code"}
+                    </Button>
+                </div>
             </div>
 
             <div className="max-h-[410px] overflow-auto">

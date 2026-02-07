@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import PricingSection from "@/components/ui/pricing-section";
+import { UserNav } from "@/components/ui/UserNav";
 import { LIBRARY_ICONS } from "@/constants/library";
 import { type StandardAnimationPreset } from "@/constants/animations";
 
@@ -125,6 +126,7 @@ export default function Home() {
               onClick={() => router.push("/studio")}
               className="w-auto min-w-[140px] px-4 text-sm"
             />
+            <UserNav />
           </nav>
         </header>
 

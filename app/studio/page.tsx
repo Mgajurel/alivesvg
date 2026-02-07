@@ -19,6 +19,11 @@ import { Button } from "@/components/ui/Button";
 import { ArrowLeft, FileCode2, Sparkles, Upload, WandSparkles } from "lucide-react";
 import { annotateSvgContent, applySelection } from "@/lib/svgParts";
 import { buildCustomCssSnippet } from "@/lib/animationCss";
+import { UserNav } from "@/components/ui/UserNav";
+import { useUserPlan } from "@/hooks/useUserPlan";
+import { AuthGateModal } from "@/components/ui/AuthGateModal";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
+import { FREE_STUDIO_EXPORT_LIMIT } from "@/types/database";
 
 const reveal: Variants = {
     hidden: { opacity: 0 },
@@ -83,6 +88,12 @@ export default function StudioPage() {
     const [customCss, setCustomCss] = useState("");
     const [useCustomCss, setUseCustomCss] = useState(false);
     const [exportMode, setExportMode] = useState<"package" | "inline">("package");
+
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const { plan, studioUsage, studioLimit, isSignedIn, refresh } = useUserPlan();
+
+    const studioUsageRemaining = studioLimit !== null ? studioLimit - studioUsage : null;
 
     const previewSvg = useMemo(() => {
         if (!svgBase) return null;
@@ -170,6 +181,7 @@ export default function StudioPage() {
                         <Button asChild variant="outline" className="rounded-full">
                             <Link href="/library">Icon Library</Link>
                         </Button>
+                        <UserNav />
                     </motion.div>
                 </motion.header>
 
@@ -239,6 +251,14 @@ export default function StudioPage() {
                                 {TRIGGER_MODE_LABELS[triggerMode]} • {LOOP_MODE_LABELS[loopMode]}
                             </span>
                         </div>
+
+                        {isSignedIn && svgBase && (
+                            <div className="mb-4 rounded-2xl border border-slate-900/10 bg-slate-50 px-4 py-2 text-xs text-slate-600">
+                                {plan !== "free"
+                                    ? "Unlimited Studio exports"
+                                    : `${studioUsageRemaining !== null ? studioUsageRemaining : 0} of ${FREE_STUDIO_EXPORT_LIMIT} free exports remaining`}
+                            </div>
+                        )}
 
                         {!svgBase ? (
                             <UploadZone
@@ -321,6 +341,12 @@ export default function StudioPage() {
                                     customSettings={customSettings}
                                     customCss={customCss}
                                     useCustomCss={useCustomCss}
+                                    isSignedIn={isSignedIn}
+                                    userPlan={plan}
+                                    studioUsageRemaining={studioUsageRemaining}
+                                    onRequireAuth={() => setShowAuthModal(true)}
+                                    onRequirePurchase={() => setShowUpgradeModal(true)}
+                                    onExportRecorded={refresh}
                                 />
                             </>
                         ) : (
@@ -339,6 +365,9 @@ export default function StudioPage() {
                     </motion.div>
                 </motion.section>
             </main>
+
+            <AuthGateModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+            <UpgradeModal open={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
         </div>
     );
 }

@@ -17,6 +17,10 @@ import {
 import { Button } from "@/components/ui/Button";
 import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import { ArrowLeft, Search, Sparkles, WandSparkles, X } from "lucide-react";
+import { UserNav } from "@/components/ui/UserNav";
+import { useUserPlan } from "@/hooks/useUserPlan";
+import { AuthGateModal } from "@/components/ui/AuthGateModal";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 
 const reveal: Variants = {
     hidden: { opacity: 0 },
@@ -63,11 +67,14 @@ const TAG_FILTERS = [
 
 export default function LibraryPage() {
     const router = useRouter();
+    const { plan, isSignedIn } = useUserPlan();
     const [search, setSearch] = useState("");
     const [triggerMode, setTriggerMode] = useState<AnimationTriggerMode>("always");
     const [loopMode, setLoopMode] = useState<AnimationLoopMode>("continuous");
     const [animationFilter, setAnimationFilter] = useState<StandardAnimationPreset | "all">("all");
     const [tagFilter, setTagFilter] = useState<string>(ALL_TAG);
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const searchTerm = search.trim().toLowerCase();
     const filteredIcons = LIBRARY_ICONS.filter((item) => {
@@ -109,12 +116,13 @@ export default function LibraryPage() {
                         </span>
                     </motion.div>
 
-                    <motion.div variants={rise}>
+                    <motion.div variants={rise} className="flex items-center gap-3">
                         <InteractiveHoverButton
                             text="Open Studio"
                             onClick={() => router.push("/studio")}
                             className="w-auto min-w-[160px] px-4 text-sm"
                         />
+                        <UserNav />
                     </motion.div>
                 </motion.header>
 
@@ -310,7 +318,14 @@ export default function LibraryPage() {
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                     transition={{ duration: 0.34, delay: index * 0.03 }}
                                 >
-                                    <IconCard item={item} playback={playback} />
+                                    <IconCard
+                                        item={item}
+                                        playback={playback}
+                                        userPlan={plan}
+                                        isSignedIn={isSignedIn}
+                                        onRequireAuth={() => setShowAuthModal(true)}
+                                        onRequirePurchase={() => setShowUpgradeModal(true)}
+                                    />
                                 </motion.div>
                             ))}
                         </div>
@@ -337,6 +352,9 @@ export default function LibraryPage() {
                     </div>
                 )}
             </main>
+
+            <AuthGateModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+            <UpgradeModal open={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
         </div>
     );
 }
