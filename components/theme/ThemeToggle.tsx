@@ -1,9 +1,18 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useTheme } from "@/components/theme/ThemeProvider";
 
 export function ThemeToggle() {
     const { theme, resolvedTheme, setTheme } = useTheme();
+    const mounted = useSyncExternalStore(
+        () => () => { },
+        () => true,
+        () => false,
+    );
+
+    if (!mounted) return null;
+
     const activeTheme = theme === "system" ? resolvedTheme : theme;
 
     return (

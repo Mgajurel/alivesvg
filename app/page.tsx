@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 import {
-  ArrowRight,
   Code2,
   Sparkles,
   WandSparkles,
